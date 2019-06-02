@@ -183,5 +183,6 @@ EndFunc
 
 RunPadvishConsole()
 PadvishConsoleLogIn()
-;~ AddNewAgent()
 CreatePushInstallTask()
+FileOpen(@ScriptDir & "\TaskCreates", 1)
+FileClose(@ScriptDir & "\TaskCreates")
