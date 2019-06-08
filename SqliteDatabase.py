@@ -1,98 +1,65 @@
 import os
-import operator
-import sqlite3
 import Configurations
 
+os.chdir(Configurations.SqliteWorkingDirectory)
 
 
+def GetTableNames(DatabaseName):
+    TableNamesList = []
+    with open(Configurations.SqliteWorkingDirectory + 'TableNamesQuery.txt', 'w') as QueryFile:
+        QueryFile.write('.output %s_TableNames.txt \n ' % (DatabaseName[:-3]))
+        QueryFile.write('select name from sqlite_master where type = \'table\';\n')
+        QueryFile.write('.output stdout')
+    os.system('SqliteEnc.exe -enc \"' + Configurations.ServerPath + '%s\" < ' % (
+        DatabaseName) + Configurations.SqliteWorkingDirectory + 'TableNamesQuery.txt')
+    with open(Configurations.SqliteWorkingDirectory + DatabaseName[:-3] + '_TableNames.txt', 'r') as TableNames:
+        for line in TableNames.readlines():
+            TableNamesList.append(line[:-2])
+    os.remove(Configurations.SqliteWorkingDirectory + DatabaseName[:-3] + '_TableNames.txt')
+    os.remove(Configurations.SqliteWorkingDirectory + 'TableNamesQuery.txt')
+    return TableNamesList
 
+def GetColumnProperties(DatabaseName, TableName):
+    ColumnNamesList = []
+    with open(Configurations.SqliteWorkingDirectory + 'ColumnPropertiesQuery.txt', 'w') as QueryFile:
+        QueryFile.write('.output %s' % DatabaseName[:-3] + '_%s.txt\n' % (TableName))
+        QueryFile.write('PRAGMA TABLE_INFO(%s);\n' % TableName)
+        QueryFile.write('.output stdout\n')
+    os.system('SqliteEnc.exe -enc \"' + Configurations.ServerPath + '%s\" < ' % (
+        DatabaseName) + Configurations.SqliteWorkingDirectory + 'ColumnPropertiesQuery.txt')
+    with open(Configurations.SqliteWorkingDirectory + DatabaseName[:-3] + '_%s.txt' % (TableName), 'r') as ColumnName:
+        for line in ColumnName.readlines():
+            ColumnNamesList.append(line[:-2])
+    os.remove(Configurations.SqliteWorkingDirectory + DatabaseName[:-3] + '_%s.txt' % (TableName))
+    os.remove(Configurations.SqliteWorkingDirectory + 'ColumnPropertiesQuery.txt')
+    return ColumnNamesList
 
-def DataBaseDecrypter(DBName):
-	#This Method Decrypts Encrypted Input Sqlite Database File
-	Input = open (Configurations.CurrentWorkingDirectory + DBName, 'rb')
-	Output = open (Configurations.CurrentWorkingDirectory + 'Decrypted_' + DBName, 'ab')
-	Counter = 0
-	print 'Decrypter is running. please wait ...'.title()
-	while 1:
-		try:
-			byte = Input.read(1)
-			if not byte:
-				break
-			Wrapper = ((1+Counter)*(1+Counter)*1997)%991
-			Ucode = ord(byte)
-			newbyte = operator.xor(Ucode,Wrapper)
-			newbyte = operator.__and__(newbyte,255)
-			Output.write(chr(newbyte))
-			Counter += 1
-		except Exception as e:
-			print e.message
-	Input.close()
-	Output.close()
+def GetLastNRows(DatabaseName, TableName, ColumnName, OrderBy, n):
+    Rows = []
+    with open(Configurations.SqliteWorkingDirectory + 'LastNRows.txt', 'w') as QueryFile:
+        QueryFile.write('.mode csv\n.output %s' % DatabaseName[:-3] + '_%s_%s.csv\n' % (TableName, n))
+        QueryFile.write('select %s from %s order by %s DESC limit %s;\n' % (ColumnName, TableName, OrderBy, n))
+        QueryFile.write('.output stdout\n')
+    os.system('SqliteEnc.exe -enc \"' + Configurations.ServerPath + '%s\" < ' % (
+        DatabaseName) + Configurations.SqliteWorkingDirectory + 'LastNRows.txt')
+    with open(Configurations.SqliteWorkingDirectory + DatabaseName[:-3] + '_%s_%s.csv' % (TableName, n), 'r') as Latests:
+        for line in Latests.readlines():
+            Rows.append(line)
+    os.remove(Configurations.SqliteWorkingDirectory + DatabaseName[:-3] + '_%s_%s.csv' % (TableName, n))
+    os.remove(Configurations.SqliteWorkingDirectory + 'LastNRows.txt')
+    return Rows
 
-
-def DataBaseTableNames(DBName):
-	#This Method Returns All Table Names Of Given Database
-	TablesNameList = []
-	Input = Configurations.CurrentWorkingDirectory + DBName
-	try:
-		Conn = sqlite3.connect(Input)
-		Cursor = Conn.cursor()
-		for row in Cursor.execute('select name from sqlite_master where type = \'table\''):
-			TablesNameList.append(row[0])
-		return TablesNameList
-	except Exception as e : 
-		print e.message
-
-
-def ColumnsProperties(DbName, TableName):
-	#This Method Returns A Dictionary Of Columns Name And Column Type Of Given Table
-	Columns = {}
-	DataBasePath = Configurations.CurrentWorkingDirectory + DbName
-	try:
-		Conn = sqlite3.connect(DataBasePath)	
-		Cursor = Conn.cursor()
-		for row in  Cursor.execute('PRAGMA TABLE_INFO(%s)'%TableName):
-			Columns[row[1]] = row[2] 
-		return Columns
-	except Exception as e:
-		print e.message
-
-
-def ReadLastNRow(DbName, TableName, ColumnName, OrderBy ,n):
-	DataBasePath = Configurations.CurrentWorkingDirectory + DbName
-	try:
-		Conn = sqlite3.connect(DataBasePath)	
-		Cursor = Conn.cursor()
-		for row in  Cursor.execute('select %s from %s order by %s DESC limit %s'%(ColumnName ,TableName, OrderBy, n)): #DESC
-			return row
-	except Exception as e:
-		print e.message
-
-
-def GetLastValue(DbName, TableName, ColumnName):
-	DataBasePath = Configurations.CurrentWorkingDirectory + DbName
-	try:
-		Conn = sqlite3.connect(DataBasePath)	
-		Cursor = Conn.cursor()
-		for row in  Cursor.execute('select %s from %s order by %s DESC limit 1'%(ColumnName, TableName, ColumnName)): #DESC
-			return row[0]
-	except Exception as e:
-		print e.message
-
-
-def GetSpecificValue(DbName, TableName, ColumnName, delimiter, delimiterValue):
-	#THIS METHOD RETURNS A LIST OF VALUES OF SPECIFIC COLUMN
-	DataBasePath = Configurations.CurrentWorkingDirectory + DbName
-	ValueList = []
-	try:
-		Conn = sqlite3.connect(DataBasePath)	
-		Cursor = Conn.cursor()
-		for row in  Cursor.execute('select %s from %s where %s = %s'%(ColumnName, TableName, delimiter, delimiterValue)): #DESC
-			ValueList.append(row)
-		return ValueList
-	except Exception as e:
-		print e.message
-
-
-
-
+def GetSpecificRecord(DatabaseName, TableName, ColumnName, delimiter, delimiterValue):
+    Record = []
+    with open(Configurations.SqliteWorkingDirectory + 'SpecificRecord.txt', 'w') as QueryFile:
+        QueryFile.write('.output %s\n' % (DatabaseName[:-3] + '_%s_%s.txt' % (TableName, ColumnName)))
+        QueryFile.write('select %s from %s where %s = %s;\n' % (ColumnName, TableName, delimiter, delimiterValue))
+        QueryFile.write('.output stdout\n')
+    os.system('SqliteEnc.exe -enc \"' + Configurations.ServerPath + '%s\" < ' % (
+        DatabaseName) + Configurations.SqliteWorkingDirectory + 'SpecificRecord.txt')
+    with open(Configurations.SqliteWorkingDirectory + DatabaseName[:-3] + '_%s_%s.txt' % (TableName, ColumnName), 'r') as SpecificRecord:
+        for line in SpecificRecord.readlines():
+            Record.append(line)
+    os.remove(Configurations.SqliteWorkingDirectory + DatabaseName[:-3] + '_%s_%s.txt' % (TableName, ColumnName))
+    os.remove(Configurations.SqliteWorkingDirectory + 'SpecificRecord.txt')
+    return Record

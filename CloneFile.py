@@ -13,12 +13,12 @@ def CloneFile(FileName):
 		if os.path.isfile(Configurations.CurrentWorkingDirectory + r'Decrypted_' + FileName):
 			os.remove(Configurations.CurrentWorkingDirectory + r'Decrypted_' + FileName)
 
-		ServiceActions.ChangeServiceFailureAction(Configurations.AmnPardazServerServiceName)
-		ServiceActions.StopService(Configurations.AmnPardazServerServiceName)
+		# ServiceActions.ChangeServiceFailureAction(Configurations.AmnPardazServerServiceName)
+		# ServiceActions.StopService(Configurations.AmnPardazServerServiceName)
 
 		copyfile(Configurations.ServerPath + FileName, Configurations.CurrentWorkingDirectory + FileName)
 
-		ServiceActions.StartService(Configurations.AmnPardazServerServiceName)
+		# ServiceActions.StartService(Configurations.AmnPardazServerServiceName)
 
 	except Exception as e:
 		print e.message
