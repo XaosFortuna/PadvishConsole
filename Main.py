@@ -5,45 +5,59 @@ import ServiceActions
 import CloneFile
 import RunExecutables
 import time
+import Logger
 
 if __name__ == '__main__':
-
-    # RunExecutables.CreatePushInstallTask()
-    # while not os.path.isfile(Configurations.CurrentWorkingDirectory + 'TaskCreates'):
-    # 	time.sleep(1000)
-    # os.remove(Configurations.CurrentWorkingDirectory + 'TaskCreates')
+    os.chdir(Configurations.CurrentWorkingDirectory)
+    # GET TASK ID BEFORE CREATE NEW TASK
+    FormerTaskID = int(SqliteDatabase.GetSpecificRecord('main.db', 'tasks_jobs', 'taskid', 'jobid',
+                                                        '(SELECT MAX(jobid)  FROM tasks_jobs)')[0])
+    print FormerTaskID
+    Logger.Logger('create push install task')
+    RunExecutables.CreatePushInstallTask()
+    while not os.path.isfile('TaskCreates'):
+        time.sleep(1)
+    os.remove('TaskCreates')
 
     # GET LATEST TASK ID AND CHECK IF TASK DONE CORRECTLY
-    # CloneFile.CloneFile('main.db')
-    # SqliteDatabase.DataBaseDecrypter('main.db')
-    LatestTaskID = SqliteDatabase.GetLastRecord('Decrypted_main.db', 'tasks_jobs', 'taskid')
-    print LatestTaskID
+    TaskID = int(SqliteDatabase.GetSpecificRecord('main.db', 'tasks_jobs', 'taskid', 'jobid',
+                                                  '(SELECT MAX(jobid)  FROM tasks_jobs)')[0])
+    print TaskID
+    while TaskID == FormerTaskID:
+        time.sleep(1)
+        TaskID = int(SqliteDatabase.GetSpecificRecord('main.db', 'tasks_jobs', 'taskid', 'jobid',
+                                                      '(SELECT MAX(jobid)  FROM tasks_jobs)')[0])
 
-    for i in SqliteDatabase.GetSpecificRecord('Decrypted_main.db', 'tasks_jobs', '*', 'taskid', LatestTaskID):
-        print 'taskid is : ' + str(i)
+    TaskSpecification = str(SqliteDatabase.GetSpecificRecord('main.db', 'tasks_jobs', '*', 'taskid', TaskID))
+    Status = int(TaskSpecification.split(',')[4])
+    TargetIp = str(TaskSpecification.split(',')[3])
+    TaskResult = TaskSpecification.split(',')[5]
 
-        while i[4] == 3:
-            time.sleep(1000)
-        if i[4] == 1:
-            print 'task is already finished!'.title()
-        else:
-            print 'task status : \"'.title() + Configurations.MainDatabaseTasksJobsStatusDict.get(i[4]) + '\" For ' + i[
-                3] + ' Reason : ' + Configurations.MainDatabaseTasksJobsRetultDict.get(str(i[5]))
+    print 'push install task is in process\nplease wait ...'.title()
+    while Status == 0 or Status == 3 or Status == 4:
+        time.sleep(1)
+        TaskSpecification = str(SqliteDatabase.GetSpecificRecord('main.db', 'tasks_jobs', '*', 'taskid', TaskID))
+        Status = int(TaskSpecification.split(',')[4])
+        TargetIp = str(TaskSpecification.split(',')[3])
+        TaskResult = TaskSpecification.split(',')[5]
 
-    # TableNamesList = ConsoleDataBase.DataBaseTableNames('Decrypted_main.db')
-    # for t in TableNamesList:
-    # 	print '----------\n' +  t + '\n----------'
-    # 	ColumnsProperties = ConsoleDataBase.ColumnsProperties('Decrypted_main.db', t)
-    # 	for i in ColumnsProperties:
-    # 		print i, ColumnsProperties[i]
-    # for i in SqliteDatabase.DataBaseTableNames('Decrypted_main.db'):
-    # 	print i
+    if Status == 1:
+        print 'push install done!'.title()
+        Logger.Logger('push install done!'.title())
+    else:
+        Logger.Logger(
+                'task status \"'.title() + Configurations.MainDatabaseTasksJobsStatusDict.get(
+                    Status) + '\" For (' + TargetIp + ') Reason: ' +
+                Configurations.MainDatabaseTasksJobsRetultDict.get(str(TaskResult)))
+        print 'task status : \"'.title() + Configurations.MainDatabaseTasksJobsStatusDict.get(
+            Status) + '\" For (' + TargetIp + ') Reason: ' + Configurations.MainDatabaseTasksJobsRetultDict.get(
+            str(TaskResult)
+            )
 
-    # c = SqliteDatabase.ColumnsProperties('Decrypted_main.db', 'tasks')
-    # for i in c:
-    # 	print i, c[i]
+    # for i in SqliteDatabase.GetTableNames('main.db'):
+    #     print i
 
-    for i in SqliteDatabase.ReadLastNRow('Decrypted_main.db', 'tasks', 'task_type', 'id', 1):
-        print i
+    # for i in SqliteDatabase.GetColumnProperties('main.db', 'tasks_jobs'):
+    #     print i
 
-# print SqliteDatabase.ReadLastNRow('Decrypted_main.db', 'tasks_jobs', '*', 'jobid', 100)
+    # print SqliteDatabase.GetLastNRows('main.db', 'tasks_jobs', '*', 'jobid', 100)

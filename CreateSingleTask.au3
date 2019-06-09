@@ -5,6 +5,7 @@
 #include <File.au3>
 
 
+
 $SleepTime = 500
 
 
@@ -176,13 +177,31 @@ Sleep($SleepTime)
 EndFunc
 
 
+BlockInput(1)
 
-
-
-
-
+While ProcessExists("AmnPardazManagementConsole.exe")
+   ProcessClose("AmnPardazManagementConsole.exe")
+   Sleep($SleepTime)
+WEnd
 RunPadvishConsole()
 PadvishConsoleLogIn()
 CreatePushInstallTask()
 FileOpen(@ScriptDir & "\TaskCreates", 1)
+Sleep(1000)
 FileClose(@ScriptDir & "\TaskCreates")
+Sleep(2000)
+ProcessClose("AmnPardazManagementConsole.exe")
+
+BlockInput(0)
+
+
+
+
+
+
+
+
+
+
+
+

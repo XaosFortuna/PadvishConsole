@@ -1,0 +1,12 @@
+13:50:07 >	Task Status : "Fail" For 192.168.104.77 Reason : Install Error
+13:55:21 >	Create Push Install Task
+13:56:04 >	Task Status : "Fail" For 192.168.104.77 Reason : Install Error
+14:09:30 >	Create Push Install Task
+12:34:43 >	Create Push Install Task
+12:39:25 >	Task Status : "Fail" For 192.168.104.77 Reason : Install Error
+14:26:10 >	Create Push Install Task
+14:26:53 >	Task Status : "Fail" For 192.168.104.77 Reason : Install Error
+14:29:33 >	Create Push Install Task
+14:30:13 >	Task Status "Fail" For 192.168.104.77. Reason: Install Error
+14:37:12 >	Create Push Install Task
+14:37:49 >	Task Status "Fail" For (192.168.104.77) Reason: Install Error
