@@ -6,7 +6,7 @@
 
 
 
-$SleepTime = 500
+$SleepTime = 1000
 
 
 Func ClientIpList()
